@@ -1,29 +1,32 @@
 import heapq
+import math
 
 class AStar:
     """
-    A simple A* planner on an open 2D grid.
-    Recomputes the shortest path from start to goal on each call to plan().
+    A* planner on a 2D grid with dynamic terrain costs and 8-connectivity (King's moves).
+    Recomputes the shortest path each call to plan(), taking into account `env.costs`.
+    Walls (infinite cost) are treated as impassable.
     """
     def __init__(self, size, env, obstacles=None):
         """
-        :param size: int, dimension of the square grid (size x size)
-        :param obstacles: iterable of (x,y) tuples marking blocked cells
+        :param size: Grid dimension (size x size)
+        :param env: Environment instance providing `get_cost(a,b)` and `costs` array
+        :param obstacles: Iterable of fixed obstacle cells (optional)
         """
         self.size = size
         self.env = env
         self.obstacles = set(obstacles) if obstacles else set()
 
+    def _cost(self, a, b):
+        """Return dynamic move cost from cell a to b."""
+        return self.env.get_cost(b)
+
     def heuristic(self, a, b):
-        """
-        Chebyshev distance heuristic (max of dx, dy).
-        """
+        """Chebyshev distance heuristic (admissible if min cost >= 1)."""
         return max(abs(a[0] - b[0]), abs(a[1] - b[1]))
 
     def neighbors(self, node):
-        """
-        Generate traversable neighbor cells (8-connectivity).
-        """
+        """Yield 8-connected neighbors with finite cost."""
         x, y = node
         for dx in (-1, 0, 1):
             for dy in (-1, 0, 1):
@@ -32,31 +35,36 @@ class AStar:
                 nx, ny = x + dx, y + dy
                 if 0 <= nx < self.size and 0 <= ny < self.size:
                     if (nx, ny) not in self.obstacles:
-                        yield (nx, ny)
+                        # Skip walls (infinite cost)
+                        if not math.isinf(self.env.costs[nx][ny]):
+                            yield (nx, ny)
 
     def plan(self, start, goal):
         """
-        Compute a shortest-path from start to goal, returning a list of moves.
-        Each move is a (dx, dy) tuple.
+        Compute a shortest-path from start to goal considering dynamic costs.
+        Returns a list of (dx, dy) moves, or empty if unreachable.
         """
         frontier = []
-        # (f_score, g_score, node)
-        heapq.heappush(frontier, (self.heuristic(start, goal), 0, start))
-
-        came_from = {start: None}
         g_score = {start: 0}
+        came_from = {start: None}
+
+        # Push initial node as (f_score, node)
+        initial_f = self.heuristic(start, goal)
+        heapq.heappush(frontier, (initial_f, start))
 
         while frontier:
-            f, current_g, current = heapq.heappop(frontier)
+            f, current = heapq.heappop(frontier)
             if current == goal:
                 return self._reconstruct_path(came_from, start, goal)
 
+            current_g = g_score[current]
             for neighbor in self.neighbors(current):
-                tentative_g = current_g + 1
-                if neighbor not in g_score or tentative_g < g_score[neighbor]:
-                    g_score[neighbor] = tentative_g
-                    priority = tentative_g + self.heuristic(neighbor, goal)
-                    heapq.heappush(frontier, (priority, tentative_g, neighbor))
+                step_cost = self._cost(current, neighbor)
+                tentative = current_g + step_cost
+                if neighbor not in g_score or tentative < g_score[neighbor]:
+                    g_score[neighbor] = tentative
+                    priority = tentative + self.heuristic(neighbor, goal)
+                    heapq.heappush(frontier, (priority, neighbor))
                     came_from[neighbor] = current
 
         # No path found
@@ -64,7 +72,7 @@ class AStar:
 
     def _reconstruct_path(self, came_from, start, goal):
         """
-        Reconstruct the list of moves from start to goal.
+        Reconstruct list of (dx, dy) moves from start to goal.
         """
         path = []
         current = goal
