@@ -1,11 +1,13 @@
 import argparse
 import ctypes
-import time
+import sys
+
 from sim.environment import Environment
 from algo.a_star import AStar
-from algo.d_star_lite import DStarLite
+from algo.d_star_lite import DStarLiteSimple
 from gui.display import Display
 
+# Optional DPI awareness for Windows
 try:
     ctypes.windll.shcore.SetProcessDpiAwareness(1)
 except Exception:
@@ -18,7 +20,7 @@ def parse_args():
     )
     parser.add_argument(
         "--grid-size", type=int, default=64,
-        help="Dimension N for an Nx N grid"
+        help="Dimension N for an NxN grid"
     )
     parser.add_argument(
         "--max-steps", type=int, default=500,
@@ -46,19 +48,25 @@ def main():
     env = Environment(size=args.grid_size, max_steps=args.max_steps, seed=args.seed)
 
     # Initialize planners
-    evader = DStarLite(size=args.grid_size, start=env.evader_pos, goal=env.evader_goal)
+    evader = DStarLiteSimple(size=args.grid_size, start=env.evader_pos, goal=env.evader_goal)
     pursuer = AStar(size=args.grid_size)
 
     # Initialize display (controls discrete time interval via fps)
     display = Display(env, cell_size=args.cell_size, fps=args.fps)
 
+    # Initial render to ensure window shows before planning
+    display.render()
+
     # Main simulation loop
     while not env.done:
-        # Evader plans risk‐free path (vanilla D* Lite)
+        # Debug: print positions
+        print(f"Step {env.step_count}: Evader at {env.evader_pos}, Pursuer at {env.pursuer_pos}")
+
+        # Evader plans path
         ev_path = evader.plan(new_start=env.evader_pos)
         ev_move = ev_path[0] if ev_path else (0, 0)
 
-        # Pursuer plans fresh A* chase
+        # Pursuer plans chase
         chase_path = pursuer.plan(env.pursuer_pos, env.evader_pos)
         pu_move = chase_path[0] if chase_path else (0, 0)
 
@@ -67,9 +75,6 @@ def main():
 
         # Render current state and enforce time interval
         display.render()
-
-        # Sleep
-        time.sleep(2)
 
     # Simulation ended: report summary
     summary = (

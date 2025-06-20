@@ -64,6 +64,17 @@ class Display:
         )
         pygame.draw.rect(self.screen, (200, 0, 0), pu_rect)
 
+        # Draw goal (blue)
+        gx, gy = self.env.evader_goal
+        go_rect = pygame.Rect(
+            gx * self.cell_size,
+            gy * self.cell_size,
+            self.cell_size,
+            self.cell_size
+        )
+
+        pygame.draw.rect(self.screen, (0, 0, 200), go_rect)
+
         # Flip display and tick
         pygame.display.flip()
         self.clock.tick(self.fps)
