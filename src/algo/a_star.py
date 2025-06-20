@@ -5,12 +5,13 @@ class AStar:
     A simple A* planner on an open 2D grid.
     Recomputes the shortest path from start to goal on each call to plan().
     """
-    def __init__(self, size, obstacles=None):
+    def __init__(self, size, env, obstacles=None):
         """
         :param size: int, dimension of the square grid (size x size)
         :param obstacles: iterable of (x,y) tuples marking blocked cells
         """
         self.size = size
+        self.env = env
         self.obstacles = set(obstacles) if obstacles else set()
 
     def heuristic(self, a, b):

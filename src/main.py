@@ -48,8 +48,8 @@ def main():
     env = Environment(size=args.grid_size, max_steps=args.max_steps, seed=args.seed)
 
     # Initialize planners
-    evader = DStarLite(size=args.grid_size, start=env.evader_pos, goal=env.evader_goal)
-    pursuer = AStar(size=args.grid_size)
+    evader = DStarLite(size=args.grid_size, start=env.evader_pos, goal=env.evader_goal, env=env)
+    pursuer = AStar(size=args.grid_size, env=env)
 
     # Initialize display (controls discrete time interval via fps)
     display = Display(env, cell_size=args.cell_size, fps=args.fps)

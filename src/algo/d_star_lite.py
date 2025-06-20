@@ -37,7 +37,7 @@ class DStarLite:
     Vanilla D* Lite implementation for an open 2D grid.
     Replans incrementally as the start (evader) moves.
     """
-    def __init__(self, size, start, goal, heuristic=None):
+    def __init__(self, size, start, goal, env, heuristic=None):
         """
         :param size: grid dimension (size x size)
         :param start: tuple (x,y) initial start position
@@ -48,6 +48,7 @@ class DStarLite:
         self.start = start
         self.last = start
         self.goal = goal
+        self.env = env
         self.km = 0
         self.heuristic = heuristic or (lambda a, b: max(abs(a[0]-b[0]), abs(a[1]-b[1])))
 
@@ -181,5 +182,4 @@ class DStarLite:
                     yield (nx, ny)
 
     def _cost(self, a, b):
-        """Uniform cost in open field (1 per move)."""
-        return 1
+        return self.env.get_cost(b)

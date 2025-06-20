@@ -11,7 +11,7 @@ class Environment:
         self.done = False
         self.caught = False
         self.reached_goal = False
-
+        self.costs = np.ones((self.size, self.size))
         if seed is not None:
             np.random.seed(seed)
 
@@ -41,6 +41,13 @@ class Environment:
             'goal': self.evader_goal,
             'step': self.step_count
         }
+    
+    def set_cost(self, x, y, w):
+        self.costs[x][y] = w
+
+    def get_cost(self, a: tuple):
+        (xa, ya) = a
+        return self.costs[xa][ya]
 
     def step(self, evader_move, pursuer_move=None):
         """
@@ -62,7 +69,8 @@ class Environment:
         self.step_count += 1
 
         # Check capture
-        if self.evader_pos == self.pursuer_pos:
+        
+        if max(abs(self.evader_pos[0] - self.pursuer_pos[0]), abs(self.evader_pos[1] - self.pursuer_pos[1])) <= 2:
             self.caught = True
             self.done = True
             return
