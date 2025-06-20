@@ -38,6 +38,14 @@ def parse_args():
         "--cell-size", type=int, default=10,
         help="Pixel size per grid cell in the GUI"
     )
+    parser.add_argument(
+      '--load-map', 
+      help='Path to CSV map file to initialize terrain'
+    )
+    parser.add_argument(
+      '--save-map', 
+      help='Path to CSV file to dump final terrain'
+    )
     return parser.parse_args()
 
 
@@ -51,8 +59,12 @@ def main():
     evader = DStarLite(size=args.grid_size, start=env.evader_pos, goal=env.evader_goal, env=env)
     pursuer = AStar(size=args.grid_size, env=env)
 
+    if args.load_map:
+        env.load_map(args.load_map)
+        evader._initialize()
+
     # Initialize display (controls discrete time interval via fps)
-    display = Display(env, cell_size=args.cell_size, fps=args.fps)
+    display = Display(env, cell_size=args.cell_size, fps=args.fps, evader_planner=evader)
 
     # Initial render to ensure window shows before planning
     display.render()
@@ -83,6 +95,9 @@ def main():
         f"Reached Goal: {env.reached_goal}"
     )
     print(summary)
+    
+    if args.save_map:
+        env.save_map(args.save_map)
     display.quit()
 
 

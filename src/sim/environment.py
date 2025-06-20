@@ -1,4 +1,6 @@
 import numpy as np
+import math
+import csv
 
 class Environment:
     """
@@ -94,3 +96,16 @@ class Environment:
         new_x = np.clip(x + dx, 0, self.size - 1)
         new_y = np.clip(y + dy, 0, self.size - 1)
         return (int(new_x), int(new_y))
+    
+    def load_map(self, path):
+        with open(path) as f:
+            for i, row in enumerate(csv.reader(f)):
+                for j, cell in enumerate(row):
+                    w = float(cell)
+                    self.costs[i][j] = math.inf if w == 0 else w
+
+    def save_map(self, path):
+        with open(path, 'w', newline='') as f:
+            writer = csv.writer(f)
+            for row in self.costs:
+                writer.writerow(0 if math.isinf(c) else int(c) for c in row)
