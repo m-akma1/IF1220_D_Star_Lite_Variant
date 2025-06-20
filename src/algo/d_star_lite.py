@@ -49,7 +49,7 @@ class DStarLite:
         self.last = start
         self.goal = goal
         self.km = 0
-        self.heuristic = heuristic or (lambda a, b: abs(a[0]-b[0]) + abs(a[1]-b[1]))
+        self.heuristic = heuristic or (lambda a, b: max(abs(a[0]-b[0]), abs(a[1]-b[1])))
 
         # g and rhs values
         self.g = {}
@@ -59,7 +59,6 @@ class DStarLite:
         self.queue = []  # heap of (k1, k2, node)
         self.entry_finder = {}  # node -> (k1, k2)
 
-        # Initialize
         self._initialize()
 
     def _initialize(self):
@@ -69,29 +68,20 @@ class DStarLite:
             for y in range(self.size):
                 self.g[(x, y)] = inf
                 self.rhs[(x, y)] = inf
-        # Goal has zero one-step lookahead cost
         self.rhs[self.goal] = 0
-
-        # Reset km and last start
         self.km = 0
         self.last = self.start
-
-        # Clear queue and entry tracker
         self.queue.clear()
         self.entry_finder.clear()
-
-        # Insert goal and compute initial shortest path tree
         self._add_to_queue(self.goal)
         self._compute_shortest_path()
 
     def _calculate_key(self, node):
-        """Return the key for a node as a tuple (k1, k2)."""
         g_rhs = min(self.g[node], self.rhs[node])
         return (g_rhs + self.heuristic(self.start, node) + self.km, g_rhs)
 
     def _add_to_queue(self, node):
         """Add or update a node's key in the priority queue."""
-        # Remove any previous entry for node
         if node in self.entry_finder:
             del self.entry_finder[node]
         key = self._calculate_key(node)
@@ -126,7 +116,6 @@ class DStarLite:
         if self.g[u] != self.rhs[u]:
             self._add_to_queue(u)
         elif u in self.entry_finder:
-            # If now consistent, remove from queue
             del self.entry_finder[u]
 
     def _compute_shortest_path(self):
@@ -160,11 +149,8 @@ class DStarLite:
             self.start = new_start
         self.km += self.heuristic(self.last, self.start)
         self.last = self.start
-
-        # Update changed start vertex and propagate changes
         self._update_vertex(self.start)
         self._compute_shortest_path()
-
         return self._reconstruct_path()
 
     def _reconstruct_path(self):
@@ -173,23 +159,27 @@ class DStarLite:
         curr = self.start
         inf = math.inf
         while curr != self.goal and self.g[curr] < inf:
-            next_node = min(
+            succ = min(
                 self._neighbors(curr),
                 key=lambda s: self._cost(curr, s) + self.g[s]
             )
-            dx = next_node[0] - curr[0]
-            dy = next_node[1] - curr[1]
+            dx = succ[0] - curr[0]
+            dy = succ[1] - curr[1]
             path.append((dx, dy))
-            curr = next_node
+            curr = succ
         return path
 
     def _neighbors(self, node):
+        """Return 8-connected neighbors."""
         x, y = node
-        for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-            nx, ny = x + dx, y + dy
-            if 0 <= nx < self.size and 0 <= ny < self.size:
-                yield (nx, ny)
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                if dx == 0 and dy == 0:
+                    continue
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < self.size and 0 <= ny < self.size:
+                    yield (nx, ny)
 
     def _cost(self, a, b):
-        """Uniform cost in open field."""
+        """Uniform cost in open field (1 per move)."""
         return 1

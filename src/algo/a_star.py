@@ -7,7 +7,7 @@ class AStar:
     """
     def __init__(self, size, obstacles=None):
         """
-        :param size: int, dimension of the square gri   d (size x size)
+        :param size: int, dimension of the square grid (size x size)
         :param obstacles: iterable of (x,y) tuples marking blocked cells
         """
         self.size = size
@@ -15,20 +15,23 @@ class AStar:
 
     def heuristic(self, a, b):
         """
-        Manhattan distance heuristic.
+        Chebyshev distance heuristic (max of dx, dy).
         """
-        return abs(a[0] - b[0]) + abs(a[1] - b[1])
+        return max(abs(a[0] - b[0]), abs(a[1] - b[1]))
 
     def neighbors(self, node):
         """
-        Generate traversable neighbor cells (4-connectivity).
+        Generate traversable neighbor cells (8-connectivity).
         """
         x, y = node
-        for dx, dy in [(1,0),(-1,0),(0,1),(0,-1)]:
-            nx, ny = x + dx, y + dy
-            if 0 <= nx < self.size and 0 <= ny < self.size:
-                if (nx, ny) not in self.obstacles:
-                    yield (nx, ny)
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                if dx == 0 and dy == 0:
+                    continue
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < self.size and 0 <= ny < self.size:
+                    if (nx, ny) not in self.obstacles:
+                        yield (nx, ny)
 
     def plan(self, start, goal):
         """
