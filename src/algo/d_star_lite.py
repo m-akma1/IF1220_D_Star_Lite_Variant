@@ -1,37 +1,6 @@
 import heapq
 import math
 
-class DStarLiteSimple:
-    """
-    Simplified D* Lite stub for an open grid: greedy diagonal toward goal.
-    """
-    def __init__(self, size, start, goal, heuristic=None):
-        self.size = size
-        self.start = start
-        self.goal = goal
-
-    def plan(self, new_start=None):
-        """
-        Returns a single-step move towards the goal, preferring diagonal.
-        """
-        if new_start is not None:
-            self.start = new_start
-
-        sx, sy = self.start
-        gx, gy = self.goal
-        dx = 1 if gx > sx else (-1 if gx < sx else 0)
-        dy = 1 if gy > sy else (-1 if gy < sy else 0)
-
-        # Prefer simultaneous diagonal move when both dx & dy non-zero
-        if dx != 0 and dy != 0:
-            return [(dx, dy)]
-        elif dx != 0:
-            return [(dx, 0)]
-        elif dy != 0:
-            return [(0, dy)]
-        else:
-            return []
-
 class DStarLite:
     """
     Vanilla D* Lite implementation for an open 2D grid.

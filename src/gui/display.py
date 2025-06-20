@@ -38,7 +38,7 @@ class Display:
         # Event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit(); sys.exit()
+                self.quit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     self.paused = not self.paused
@@ -72,7 +72,7 @@ class Display:
             while True:
                 ev = pygame.event.wait()
                 if ev.type == pygame.QUIT:
-                    pygame.quit(); sys.exit()
+                    self.quit()
                 elif ev.type == pygame.KEYDOWN:
                     if ev.key == pygame.K_SPACE:
                         self.paused = False
@@ -188,5 +188,6 @@ class Display:
         )
 
     def quit(self):
+        pygame.event.wait()
         pygame.quit()
         sys.exit()
