@@ -55,113 +55,141 @@ class DStarLite:
         self.g = {}
         self.rhs = {}
 
-        # Priority queue of nodes to process
-        self.U = []  # list of (k1, k2, node)
+        # Priority queue and entry tracker
+        self.queue = []  # heap of (k1, k2, node)
+        self.entry_finder = {}  # node -> (k1, k2)
 
         # Initialize
         self._initialize()
 
     def _initialize(self):
-        """Initialize data structures and insert goal into U."""
+        """Initialize g, rhs for all nodes, add goal to queue, and compute initial shortest paths."""
+        inf = math.inf
         for x in range(self.size):
             for y in range(self.size):
-                self.g[(x,y)] = math.inf
-                self.rhs[(x,y)] = math.inf
+                self.g[(x, y)] = inf
+                self.rhs[(x, y)] = inf
+        # Goal has zero one-step lookahead cost
         self.rhs[self.goal] = 0
-        self.U = []
-        heapq.heappush(self.U, (*self._calculate_key(self.goal), self.goal))
+
+        # Reset km and last start
         self.km = 0
         self.last = self.start
+
+        # Clear queue and entry tracker
+        self.queue.clear()
+        self.entry_finder.clear()
+
+        # Insert goal and compute initial shortest path tree
+        self._add_to_queue(self.goal)
+        self._compute_shortest_path()
 
     def _calculate_key(self, node):
         """Return the key for a node as a tuple (k1, k2)."""
         g_rhs = min(self.g[node], self.rhs[node])
-        k1 = g_rhs + self.heuristic(self.start, node) + self.km
-        k2 = g_rhs
-        return (k1, k2)
+        return (g_rhs + self.heuristic(self.start, node) + self.km, g_rhs)
+
+    def _add_to_queue(self, node):
+        """Add or update a node's key in the priority queue."""
+        # Remove any previous entry for node
+        if node in self.entry_finder:
+            del self.entry_finder[node]
+        key = self._calculate_key(node)
+        entry = (key[0], key[1], node)
+        self.entry_finder[node] = key
+        heapq.heappush(self.queue, entry)
+
+    def _pop_queue(self):
+        """Pop the smallest valid entry from the queue, skipping outdated ones."""
+        while self.queue:
+            k1, k2, node = heapq.heappop(self.queue)
+            if node in self.entry_finder and self.entry_finder[node] == (k1, k2):
+                del self.entry_finder[node]
+                return (k1, k2, node)
+        return (None, None, None)
+
+    def _peek_queue(self):
+        """Return the smallest valid entry without removing it."""
+        while self.queue:
+            k1, k2, node = self.queue[0]
+            if node in self.entry_finder and self.entry_finder[node] == (k1, k2):
+                return (k1, k2, node)
+            heapq.heappop(self.queue)
+        return (None, None, None)
 
     def _update_vertex(self, u):
-        """Update or insert node u in the priority queue U."""
+        """Update or remove and reinsert vertex u based on its rhs and g values."""
         if u != self.goal:
-            # compute rhs from successors
             self.rhs[u] = min(
                 self._cost(u, s) + self.g[s] for s in self._neighbors(u)
             )
-        # remove u from U if present (lazy removal on pop)
-        # then if g!=rhs, add with new key
         if self.g[u] != self.rhs[u]:
-            heapq.heappush(self.U, (*self._calculate_key(u), u))
+            self._add_to_queue(u)
+        elif u in self.entry_finder:
+            # If now consistent, remove from queue
+            del self.entry_finder[u]
 
     def _compute_shortest_path(self):
-        """Core loop of D* Lite until start is locally consistent."""
+        """Main loop: process nodes until start is locally consistent."""
         while True:
-            if not self.U:
+            top_k1, top_k2, u = self._peek_queue()
+            if u is None:
                 break
-            k_old = self.U[0][:2]
             k_start = self._calculate_key(self.start)
-            if k_old >= k_start and self.rhs[self.start] == self.g[self.start]:
+            if (top_k1, top_k2) >= k_start and self.rhs[self.start] == self.g[self.start]:
                 break
-
-            _, _, u = heapq.heappop(self.U)
+            _, _, u = self._pop_queue()
+            if u is None:
+                break
+            k_old = (top_k1, top_k2)
             k_new = self._calculate_key(u)
             if k_old < k_new:
-                heapq.heappush(self.U, (*k_new, u))
+                self._add_to_queue(u)
             elif self.g[u] > self.rhs[u]:
                 self.g[u] = self.rhs[u]
                 for s in self._neighbors(u):
                     self._update_vertex(s)
             else:
-                g_old = self.g[u]
                 self.g[u] = math.inf
-                for s in self._neighbors(u) | {u}:
+                for s in set(self._neighbors(u)) | {u}:
                     self._update_vertex(s)
 
     def plan(self, new_start=None):
-        """
-        Replan path given new start position. Returns a list of (dx,dy) moves to goal.
-        Call at each timestep with current start to replan incrementally.
-        """
+        """Incrementally replan from new_start to goal; returns move list."""
         if new_start is not None:
             self.start = new_start
-        # update km based on moved start
         self.km += self.heuristic(self.last, self.start)
         self.last = self.start
-        # update rhs of start
+
+        # Update changed start vertex and propagate changes
         self._update_vertex(self.start)
-        # run main loop
         self._compute_shortest_path()
-        # reconstruct path from start to goal
+
         return self._reconstruct_path()
 
     def _reconstruct_path(self):
-        """Walk from start to goal following min-rhs neighbors."""
+        """Follow the shortest-path tree from start to goal."""
         path = []
         curr = self.start
-        while curr != self.goal:
-            # choose successor that minimizes cost+g
-            succ = min(
+        inf = math.inf
+        while curr != self.goal and self.g[curr] < inf:
+            next_node = min(
                 self._neighbors(curr),
                 key=lambda s: self._cost(curr, s) + self.g[s]
             )
-            dx = succ[0] - curr[0]
-            dy = succ[1] - curr[1]
+            dx = next_node[0] - curr[0]
+            dy = next_node[1] - curr[1]
             path.append((dx, dy))
-            curr = succ
-            # safety to prevent infinite loop
-            if len(path) > self.size**2:
-                break
+            curr = next_node
         return path
 
     def _neighbors(self, node):
-        """Return 4-connected neighbors within grid bounds."""
         x, y = node
-        nbrs = set()
-        for dx, dy in [(1,0),(-1,0),(0,1),(0,-1)]:
-            nx, ny = x+dx, y+dy
+        for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+            nx, ny = x + dx, y + dy
             if 0 <= nx < self.size and 0 <= ny < self.size:
-                nbrs.add((nx, ny))
-        return nbrs
+                yield (nx, ny)
 
     def _cost(self, a, b):
-        """Uniform cost of 1 for adjacent cells (open field)."""
+        """Uniform cost in open field."""
         return 1

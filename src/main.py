@@ -4,7 +4,7 @@ import sys
 
 from sim.environment import Environment
 from algo.a_star import AStar
-from algo.d_star_lite import DStarLiteSimple
+from algo.d_star_lite import DStarLite
 from gui.display import Display
 
 # Optional DPI awareness for Windows
@@ -48,7 +48,7 @@ def main():
     env = Environment(size=args.grid_size, max_steps=args.max_steps, seed=args.seed)
 
     # Initialize planners
-    evader = DStarLiteSimple(size=args.grid_size, start=env.evader_pos, goal=env.evader_goal)
+    evader = DStarLite(size=args.grid_size, start=env.evader_pos, goal=env.evader_goal)
     pursuer = AStar(size=args.grid_size)
 
     # Initialize display (controls discrete time interval via fps)
