@@ -3,9 +3,9 @@ import ctypes
 import sys
 
 from sim.environment import Environment
+from sim.display import Display
 from algo.a_star import AStar
 from algo.d_star_lite import DStarLite
-from gui.display import Display
 
 # Optional DPI awareness for Windows
 try:

@@ -1,6 +1,0 @@
-__version__ = "1.0.0"
-__author__ = "Muhammad Akmal"
-__email__ = "13524099@std.stei.itb.ac.id"
-__description__ = "Placeholder."
-__license__ = "MIT"
-__url__ = "https://github.com/m-akma1/IF1220_D_Star_Lite_Variant"
