@@ -6,6 +6,7 @@ from sim.environment import Environment
 from sim.display import Display
 from algo.a_star import AStar
 from algo.d_star_lite import DStarLite
+from algo.risk_aware_alg import RiskAwareDStar
 
 # Optional DPI awareness for Windows
 try:
@@ -55,8 +56,11 @@ def main():
     # Initialize environment
     env = Environment(size=args.grid_size, max_steps=args.max_steps, seed=args.seed)
 
+    RISK_RADIUS = 8
+    PENALTY_FACTOR = 1
+
     # Initialize planners
-    evader = DStarLite(size=args.grid_size, start=env.evader_pos, goal=env.evader_goal, env=env)
+    evader = RiskAwareDStar(size=args.grid_size, start=env.evader_pos, goal=env.evader_goal, env=env, r=RISK_RADIUS, lambda_=PENALTY_FACTOR)
     pursuer = AStar(size=args.grid_size, env=env)
 
     if args.load_map:
@@ -75,7 +79,7 @@ def main():
         print(f"Step {env.step_count}: Evader at {env.evader_pos}, Pursuer at {env.pursuer_pos}")
 
         # Evader plans path
-        ev_path = evader.plan(new_start=env.evader_pos)
+        ev_path = evader.plan(new_start=env.evader_pos, pursuer_pos=env.pursuer_pos)
         ev_move = ev_path[0] if ev_path else (0, 0)
 
         # Pursuer plans chase

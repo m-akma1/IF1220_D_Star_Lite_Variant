@@ -97,6 +97,8 @@ class Display:
                     elif ev.key == pygame.K_s:
                         self.step_once = True
                         break
+                    elif ev.key == pygame.K_q:
+                        self.quit()
                 elif ev.type == pygame.MOUSEBUTTONDOWN:
                     mx, my = ev.pos
                     if ox <= mx < ox + grid_w and oy <= my < oy + grid_h:
@@ -174,7 +176,7 @@ class Display:
     def quit(self):
         while True:
                 ev = pygame.event.wait()
-                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_SPACE:
+                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_q:
                         break
         pygame.quit()
         sys.exit()
