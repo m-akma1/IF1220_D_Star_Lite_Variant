@@ -72,13 +72,13 @@ class Environment:
 
         # Check capture
         
-        if max(abs(self.evader_pos[0] - self.pursuer_pos[0]), abs(self.evader_pos[1] - self.pursuer_pos[1])) <= 2:
+        if max(abs(self.evader_pos[0] - self.pursuer_pos[0]), abs(self.evader_pos[1] - self.pursuer_pos[1])) <= 1:
             self.caught = True
             self.done = True
             return
 
         # Check goal reached
-        if self.evader_pos == self.evader_goal:
+        if max(abs(self.evader_pos[0] - self.evader_goal[0]), abs(self.evader_pos[1] - self.evader_goal[1])) <= 1:
             self.reached_goal = True
             self.done = True
             return

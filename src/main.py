@@ -79,7 +79,7 @@ def main():
         ev_move = ev_path[0] if ev_path else (0, 0)
 
         # Pursuer plans chase
-        chase_path = pursuer.plan(env.pursuer_pos, env.evader_pos)
+        chase_path = pursuer.plan_intercept(env.pursuer_pos, env.evader_pos, env.evader_goal)
         pu_move = chase_path[0] if chase_path else (0, 0)
 
         # Advance environment by one discrete time step

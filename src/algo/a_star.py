@@ -70,6 +70,17 @@ class AStar:
         # No path found
         return []
 
+    def plan_intercept(self, start, evader_pos, goal):
+        """
+        Compute an interception target halfway between the evader and goal, then run A* to that target.
+        Returns a list of (dx, dy) moves toward the intercept point.
+        """
+        # Compute midpoint cell (integer coordinates)
+        mx = (evader_pos[0] + goal[0]) // 2
+        my = (evader_pos[1] + goal[1]) // 2
+        intercept = (mx, my)
+        return self.plan(start, intercept)
+
     def _reconstruct_path(self, came_from, start, goal):
         """
         Reconstruct list of (dx, dy) moves from start to goal.

@@ -172,6 +172,9 @@ class Display:
                           self.cell_size, self.cell_size))
 
     def quit(self):
-        pygame.event.wait()
+        while True:
+                ev = pygame.event.wait()
+                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_SPACE:
+                        break
         pygame.quit()
         sys.exit()
