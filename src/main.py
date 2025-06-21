@@ -47,6 +47,14 @@ def parse_args():
       '--save-map', 
       help='Path to CSV file to dump final terrain'
     )
+    parser.add_argument(
+      '--radius', 
+      help='Radius in which the evader flee from pursuer'
+    )
+    parser.add_argument(
+      '--penalty', 
+      help='Penalty constant for the risk function'
+    )
     return parser.parse_args()
 
 
@@ -56,8 +64,8 @@ def main():
     # Initialize environment
     env = Environment(size=args.grid_size, max_steps=args.max_steps, seed=args.seed)
 
-    RISK_RADIUS = 8
-    PENALTY_FACTOR = 1
+    RISK_RADIUS = int(args.radius) if args.radius else 1
+    PENALTY_FACTOR = int(args.penalty) if args.penalty else 0
 
     # Initialize planners
     evader = RiskAwareDStar(size=args.grid_size, start=env.evader_pos, goal=env.evader_goal, env=env, r=RISK_RADIUS, lambda_=PENALTY_FACTOR)
