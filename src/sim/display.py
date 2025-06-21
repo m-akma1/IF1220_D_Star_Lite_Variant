@@ -6,7 +6,7 @@ class Display:
     """
     Pygame-based visualization for the pursuit-evasion environment with padding, overlay text,
     playback controls, terrain shading, interactive cost editing (including walls),
-    and dynamic planner updates.
+    dynamic planner updates, and agent trace visualization.
 
     To support dynamic terrain updates, pass the evader_planner (DStarLite instance)
     into the constructor so we can notify it of cost changes.
@@ -35,13 +35,15 @@ class Display:
         self.paused = False
         self.step_once = False
 
+        # Traces for evader and pursuer positions
+        self.evader_trace = []
+        self.pursuer_trace = []
+
     def _notify_planner(self, cell):
         """
         After changing the cost of a cell, update D* Lite planner's queue.
         """
-        # Update this cell
         self.evader_planner._update_vertex(cell)
-        # Update all neighbors of this cell
         for nbr in self.evader_planner._neighbors(cell):
             self.evader_planner._update_vertex(nbr)
 
@@ -61,26 +63,22 @@ class Display:
                     self.step_once = True
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mx, my = event.pos
-                # Inside grid?
                 if ox <= mx < ox + grid_w and oy <= my < oy + grid_h:
                     cx = (mx - ox) // self.cell_size
                     cy = (my - oy) // self.cell_size
                     cell = (cx, cy)
-                    # Wall toggle with SHIFT
                     if pygame.key.get_mods() & pygame.KMOD_SHIFT:
                         if event.button == 1:
                             self.env.set_cost(cx, cy, math.inf)
                         elif event.button == 3:
                             self.env.set_cost(cx, cy, 1)
                     else:
-                        # Increase/decrease cost
                         if event.button == 1:
                             new_cost = self.env.costs[cx][cy] + 1
                             self.env.set_cost(cx, cy, new_cost)
                         elif event.button == 3:
                             new_cost = max(1, self.env.costs[cx][cy] - 1)
                             self.env.set_cost(cx, cy, new_cost)
-                    # Notify planner of this change
                     self._notify_planner(cell)
 
         # Pause logic
@@ -121,6 +119,10 @@ class Display:
                     if self.step_once:
                         break
 
+        # Record current positions into trace
+        self.evader_trace.append(self.env.evader_pos)
+        self.pursuer_trace.append(self.env.pursuer_pos)
+
         # Draw and advance
         self._draw_frame()
         if self.step_once:
@@ -138,45 +140,60 @@ class Display:
         for x in range(self.grid_size):
             for y in range(self.grid_size):
                 cost = self.env.costs[x][y]
-                if math.isinf(cost): color = (0,0,0)
+                if math.isinf(cost):
+                    color = (0, 0, 0)
                 else:
-                    norm = (cost-1)/(max_c-1) if max_c>1 else 0
-                    intensity = 255 - int(norm*254)
-                    color = (intensity,)*3
-                r = pygame.Rect(ox+x*self.cell_size, oy+y*self.cell_size,
+                    norm = (cost - 1) / (max_c - 1) if max_c > 1 else 0
+                    intensity = 255 - int(norm * 254)
+                    color = (intensity, intensity, intensity)
+                r = pygame.Rect(ox + x * self.cell_size,
+                                oy + y * self.cell_size,
                                 self.cell_size, self.cell_size)
                 pygame.draw.rect(self.screen, color, r)
 
+        # Draw traces: evader in light green, pursuer in light red
+        for pos in self.evader_trace:
+            x, y = pos
+            r = pygame.Rect(ox + x * self.cell_size, oy + y * self.cell_size, self.cell_size, self.cell_size)
+            pygame.draw.rect(self.screen, (150, 255, 150), r)
+        for pos in self.pursuer_trace:
+            x, y = pos
+            r = pygame.Rect(ox + x * self.cell_size, oy + y * self.cell_size, self.cell_size, self.cell_size)
+            pygame.draw.rect(self.screen, (255, 150, 150), r)
+
         # Overlay text
         info = f"Step {self.env.step_count}  Evader: {self.env.evader_pos}  Pursuer: {self.env.pursuer_pos}"
-        txt = self.font.render(info, True, (0,0,0))
-        self.screen.blit(txt, (self.padding, self.padding//4))
+        txt = self.font.render(info, True, (0, 0, 0))
+        self.screen.blit(txt, (self.padding, self.padding // 4))
 
         # Grid lines
-        for i in range(self.grid_size+1):
-            px = ox + i*self.cell_size
-            pygame.draw.line(self.screen, (200,200,200), (px,oy), (px,oy+self.grid_size*self.cell_size))
-            py = oy + i*self.cell_size
-            pygame.draw.line(self.screen, (200,200,200), (ox,py), (ox+self.grid_size*self.cell_size,py))
+        for i in range(self.grid_size + 1):
+            px = ox + i * self.cell_size
+            pygame.draw.line(self.screen, (200, 200, 200), (px, oy),
+                             (px, oy + self.grid_size * self.cell_size))
+            py = oy + i * self.cell_size
+            pygame.draw.line(self.screen, (200, 200, 200), (ox, py),
+                             (ox + self.grid_size * self.cell_size, py))
 
         # Goal, Evader, Pursuer
         gx, gy = self.env.evader_goal
-        pygame.draw.rect(self.screen, (0,0,200),
-                         (ox+gx*self.cell_size, oy+gy*self.cell_size,
+        pygame.draw.rect(self.screen, (0, 0, 200),
+                         (ox + gx * self.cell_size, oy + gy * self.cell_size,
                           self.cell_size, self.cell_size))
         ex, ey = self.env.evader_pos
-        pygame.draw.rect(self.screen, (0,200,0),
-                         (ox+ex*self.cell_size, oy+ey*self.cell_size,
+        pygame.draw.rect(self.screen, (0, 200, 0),
+                         (ox + ex * self.cell_size, oy + ey * self.cell_size,
                           self.cell_size, self.cell_size))
         px, py = self.env.pursuer_pos
-        pygame.draw.rect(self.screen, (200,0,0),
-                         (ox+px*self.cell_size, oy+py*self.cell_size,
+        pygame.draw.rect(self.screen, (200, 0, 0),
+                         (ox + px * self.cell_size, oy + py * self.cell_size,
                           self.cell_size, self.cell_size))
 
     def quit(self):
+        # Wait for 'q' key before quitting to allow final observation
         while True:
-                ev = pygame.event.wait()
-                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_q:
-                        break
+            ev = pygame.event.wait()
+            if ev.type == pygame.KEYDOWN and ev.key == pygame.K_q:
+                break
         pygame.quit()
         sys.exit()

@@ -65,7 +65,7 @@ def main():
     env = Environment(size=args.grid_size, max_steps=args.max_steps, seed=args.seed)
 
     RISK_RADIUS = int(args.radius) if args.radius else 1
-    PENALTY_FACTOR = int(args.penalty) if args.penalty else 0
+    PENALTY_FACTOR = float(args.penalty) if args.penalty else 0
 
     # Initialize planners
     evader = RiskAwareDStar(size=args.grid_size, start=env.evader_pos, goal=env.evader_goal, env=env, r=RISK_RADIUS, lambda_=PENALTY_FACTOR)
@@ -91,7 +91,7 @@ def main():
         ev_move = ev_path[0] if ev_path else (0, 0)
 
         # Pursuer plans chase
-        chase_path = pursuer.plan_intercept(env.pursuer_pos, env.evader_pos, env.evader_goal)
+        chase_path = pursuer.plan(env.pursuer_pos, env.evader_pos, env.evader_goal, RISK_RADIUS)
         pu_move = chase_path[0] if chase_path else (0, 0)
 
         # Advance environment by one discrete time step

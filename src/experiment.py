@@ -75,8 +75,8 @@ def run_trial(args):
 
 def main():
     parser = argparse.ArgumentParser(description="Batch experiments for Risk-Aware D* Lite.")
-    parser.add_argument('--maps-dir', default='../setup/', help='Directory containing CSV map files')
-    parser.add_argument('--output', default='experiment_results.csv', help='CSV output file')
+    parser.add_argument('--maps-dir', default='../data/map/', help='Directory containing CSV map files')
+    parser.add_argument('--output', default='../data/experiment_results.csv', help='CSV output file')
     parser.add_argument('--workers', type=int, default=mp.cpu_count(), help='Number of parallel processes')
     args = parser.parse_args()
 

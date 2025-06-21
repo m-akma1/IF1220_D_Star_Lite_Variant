@@ -39,7 +39,7 @@ class AStar:
                         if not math.isinf(self.env.costs[nx][ny]):
                             yield (nx, ny)
 
-    def plan(self, start, goal):
+    def plan_normal(self, start, goal):
         """
         Compute a shortest-path from start to goal considering dynamic costs.
         Returns a list of (dx, dy) moves, or empty if unreachable.
@@ -79,7 +79,14 @@ class AStar:
         mx = (evader_pos[0] + goal[0]) // 2
         my = (evader_pos[1] + goal[1]) // 2
         intercept = (mx, my)
-        return self.plan(start, intercept)
+        return self.plan_normal(start, intercept)
+    
+    def plan(self, start, evader_pos, goal, radius):
+        current_cost = self.heuristic(start, evader_pos)
+        if current_cost >= radius:
+            return self.plan_intercept(start, evader_pos, goal)
+        else:
+            return self.plan_normal(start, evader_pos)
 
     def _reconstruct_path(self, came_from, start, goal):
         """
