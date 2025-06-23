@@ -52,9 +52,7 @@ def run_trial(args):
         total_cost += env.get_cost(new_pos)
 
         # Pursuer planning with interception
-        chase = ch.plan_intercept(env.pursuer_pos,
-                                  env.evader_pos,
-                                  env.evader_goal)
+        chase = ch.plan(env.pursuer_pos, env.evader_pos, env.evader_goal, r)
         pu_move = chase[0] if chase else (0, 0)
 
         # Step environment
@@ -75,7 +73,7 @@ def run_trial(args):
 
 def main():
     parser = argparse.ArgumentParser(description="Batch experiments for Risk-Aware D* Lite.")
-    parser.add_argument('--maps-dir', default='../data/map/', help='Directory containing CSV map files')
+    parser.add_argument('--maps-dir', default='../map/', help='Directory containing CSV map files')
     parser.add_argument('--output', default='../data/experiment_results.csv', help='CSV output file')
     parser.add_argument('--workers', type=int, default=mp.cpu_count(), help='Number of parallel processes')
     args = parser.parse_args()

@@ -12,6 +12,7 @@ def aggregate(df):
     grouped = df.groupby(['lambda','r'])
     summary = grouped.agg(
         capture_rate=('caught','mean'),
+        reached_rate=('reached', 'mean'),
         mean_cost=('path_cost','mean'),
         mean_plan_time=('avg_plan_time','mean'),
         trials=('map','nunique')
@@ -33,6 +34,19 @@ def plot_capture_rate(summary, out_file=None):
         plt.show()
     plt.clf()
 
+def plot_reached_rate(summary, out_file=None):
+    pivot = summary.pivot(index='r', columns='lambda', values='reached_rate')
+    pivot.plot(marker='o')
+    plt.title('Success Rate over Risk Radius')
+    plt.xlabel('Risk Radius (r)')
+    plt.ylabel('Success Rate')
+    plt.legend(title='Lambda')
+    plt.grid(True)
+    if out_file:
+        plt.savefig(out_file)
+    else:
+        plt.show()
+    plt.clf()
 
 def plot_mean_cost(summary, out_file=None):
     for lam in summary['lambda'].unique():
@@ -79,6 +93,7 @@ def main():
     parser.add_argument('--input', default='experiment_results.csv' , help='Path to experiment_results.csv')
     parser.add_argument('--summary', default='summary.csv', help='Output summary CSV')
     parser.add_argument('--plot-capture', default='capture_rate.png', help='Output capture rate plot')
+    parser.add_argument('--plot-reached', default='reached_rate.png', help='Output reached rate plot')
     parser.add_argument('--plot-cost', default='mean_cost.png', help='Output mean cost plot')
     parser.add_argument('--plot-compute', default='plan_time.png', help='Output mean computation plan time plot')
     args = parser.parse_args()
@@ -87,6 +102,7 @@ def main():
     summary = aggregate(df)
     save_summary(summary, args.summary)
     plot_capture_rate(summary, args.plot_capture)
+    plot_reached_rate(summary, args.plot_reached)
     plot_mean_cost(summary, args.plot_cost)
     plot_mean_comp_time(summary, args.plot_compute)
     print_mean_plan_time_stats(summary)
