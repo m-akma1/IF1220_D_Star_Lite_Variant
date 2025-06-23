@@ -80,8 +80,8 @@ def main():
 
     # Gather tasks
     map_files = sorted(glob.glob(f"{args.maps_dir}/*.csv"))
-    lam_values = [0.25, 0.5, 0.75, 1, 1.5, 2]
-    r_values = list(range(2, 11))
+    lam_values = [0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
+    r_values = list(range(0, 11))
     tasks = [(m, lam, r) for m in map_files for lam in lam_values for r in r_values]
 
     # Parallel execution
