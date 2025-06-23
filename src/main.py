@@ -24,7 +24,7 @@ def parse_args():
         help="Dimension N for an NxN grid"
     )
     parser.add_argument(
-        "--max-steps", type=int, default=500,
+        "--max-steps", type=int, default=128,
         help="Maximum number of discrete time steps before timeout"
     )
     parser.add_argument(
@@ -33,7 +33,7 @@ def parse_args():
     )
     parser.add_argument(
         "--seed", type=int, default=None,
-        help="Random seed for reproducibility"
+        help="Random seed for reproducibility (not implemented, see map generator instead.)"
     )
     parser.add_argument(
         "--cell-size", type=int, default=10,
