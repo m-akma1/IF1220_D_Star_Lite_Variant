@@ -31,7 +31,7 @@ def run_trial(args):
 
     # Reset initial positions
     env.evader_pos = env.evader_start
-    env.pursuer_pos = (0, 63)
+    env.pursuer_pos = (63, 0)
     env.step_count = 0
     env.done = env.caught = env.reached_goal = False
 
@@ -82,8 +82,8 @@ def main():
 
     # Gather tasks
     map_files = sorted(glob.glob(f"{args.maps_dir}/*.csv"))
-    lam_values = [1, 2, 3]
-    r_values = list(range(2, 13))
+    lam_values = [0.25, 0.5, 0.75, 1, 1.5, 2]
+    r_values = list(range(2, 11))
     tasks = [(m, lam, r) for m in map_files for lam in lam_values for r in r_values]
 
     # Parallel execution
